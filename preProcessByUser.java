@@ -35,10 +35,17 @@ public class preProcessByUser {
 
 			// output: (k, v) = (userID, movie1:score1, movie2:score2, ...)
 			StringBuffer outValue = new StringBuffer();
+			double userSum = 0.;
+			int movieNum = 0;
 			while(values.iterator().hasNext()) {
-				outValue.append(values.iterator().next() + ",");
+				String value = values.iterator().next().toString();
+				String[] movieID_rawScore = value.trim().split(":");
+				userSum += Double.parseDouble(movieID_rawScore[1]);
+				movieNum += 1;
+				outValue.append(value + ",");
 			}
-            context.write(key, new Text(outValue.toString().substring(0, outValue.length() - 1)));
+			outValue.append("AVG:" + Double.toString(userSum / movieNum));
+            context.write(key, new Text(outValue.toString()));
 		}
 	}
 
