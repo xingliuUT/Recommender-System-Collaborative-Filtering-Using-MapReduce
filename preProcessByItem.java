@@ -46,7 +46,9 @@ public class preProcessByItem {
 				userNum += 1;
 				outValue.append(value + ",");
 			}
-            outValue.append("AVG:" + Double.toString(itemSum / userNum));
+            outValue.append("AVG:" + Double.toString(itemSum / userNum) + ",");
+			outValue.append("SUM:" + Double.toString(itemSum) + ",");
+			outValue.append("COUNT:" + Integer.toString(userNum));
             context.write(key, new Text(outValue.toString()));
 		}
 	}
