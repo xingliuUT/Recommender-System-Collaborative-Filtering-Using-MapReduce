@@ -37,11 +37,17 @@ public class preProcessByItem {
 
 			// output: (k, v) = (movieID, user1:score1, user2:score2, ...)
 			StringBuffer outValue = new StringBuffer();
+			double itemSum = 0.;
+			int userNum = 0;
 			while (values.iterator().hasNext()) {
-				outValue.append(values.iterator().next() + ",");
+				String value = values.iterator().next().toString();
+				String[] userID_rawScore = value.trim().split(":");
+				itemSum += Double.parseDouble(userID_rawScore[1]);
+				userNum += 1;
+				outValue.append(value + ",");
 			}
-
-            context.write(key, new Text(outValue.toString().substring(0, outValue.length() - 1)));
+            outValue.append("AVG:" + Double.toString(itemSum / userNum));
+            context.write(key, new Text(outValue.toString()));
 		}
 	}
 
