@@ -8,6 +8,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.io.IOException;
 
@@ -35,17 +37,27 @@ public class preProcessByUser {
 
 			// output: (k, v) = (userID, movie1:score1, movie2:score2, ...)
 			StringBuffer outValue = new StringBuffer();
+			double rawScore = 0.;
 			double userSum = 0.;
 			int movieNum = 0;
+			Map<String, Double> movieScoreMap = new HashMap<>();
 			while(values.iterator().hasNext()) {
 				String value = values.iterator().next().toString();
 				String[] movieID_rawScore = value.trim().split(":");
-				userSum += Double.parseDouble(movieID_rawScore[1]);
+				rawScore = Double.parseDouble(movieID_rawScore[1]);
+				userSum += rawScore;
 				movieNum += 1;
-				outValue.append(value + ",");
+                movieScoreMap.put(movieID_rawScore[0], rawScore);
+				//outValue.append(value + ",");
 			}
-			outValue.append("AVG:" + Double.toString(userSum / movieNum));
-            context.write(key, new Text(outValue.toString()));
+			double avg = userSum / movieNum;
+			for(Map.Entry<String, Double> entry : movieScoreMap.entrySet()) {
+				String movieID = entry.getKey();
+				double score = entry.getValue() - avg;
+				outValue.append(movieID + ":" + Double.toString(score) + ",");
+			}
+			//outValue.append("AVG:" + Double.toString(userSum / movieNum));
+            context.write(key, new Text(outValue.toString().substring(0, outValue.length() - 1)));
 		}
 	}
 
