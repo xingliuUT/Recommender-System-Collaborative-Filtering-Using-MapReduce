@@ -10,6 +10,8 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import java.io.IOException;
 
@@ -20,24 +22,22 @@ public class preProcessBaseline {
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 
             // input: (movieID, [userID:score, ..., AVG:avg, SUM:sum, COUNT: count])
-		    // output: (k, v) = (BASELINE, sum / count)
-			// StringBuilder sum = new StringBuilder();
-			// StringBuilder count = new StringBuilder();
+		    // output: (k, v) = (BASELINE, sum : count : movieID + user1 + user2 +...)
+			
 			String[] movieIDScoreList = value.toString().trim().split("\t");
             String[] movieID_Score = movieIDScoreList[1].split(",");
+			StringBuffer userList = new StringBuffer();
+			for (int i = 0; i < movieID_Score.length - 3; i++) {
+				String item = movieID_Score[i];
+                userList.append("=" + item.split(":")[0]);
+			}
 			String sumsum = movieID_Score[movieID_Score.length - 2];
 			String countcount = movieID_Score[movieID_Score.length - 1];
 			String sum = sumsum.split(":")[1];
 			String count = countcount.split(":")[1];
-			// for (String item : movieID_Score) {
-			// 	String[] thisItem = item.split(":");
-			// 	if (thisItem[0] == "SUM") {
-            //         sum.append(thisItem[1]);
-			// 	} else if (thisItem[0] == "COUNT") {
-			// 		count.append(thisItem[1]);
-			// 	}
-			// }
-			context.write(new Text("BASELINE"), new Text(sum + ":" + count));
+			
+			context.write(new Text("BASELINE"), new Text(sum + ":" + count + ":" + 
+			movieIDScoreList[0] + userList.toString()));
 		}
 	}
 
@@ -50,14 +50,28 @@ public class preProcessBaseline {
 			// output: (k, v) = (GLOBAL, mu)
 			double globalSum = 0.;
 			int globalCount = 0;
+			Map<String,ArrayList<String>> userID_movieIDMap = new HashMap<>();
 			while (values.iterator().hasNext()) {
 				String value = values.iterator().next().toString();
 				String[] sum_count = value.trim().split(":");
 				globalSum += Double.parseDouble(sum_count[0]);
 				globalCount += Integer.parseInt(sum_count[1]);
+				String[] userID_movieIDList = sum_count[2].trim().split("=");
+				ArrayList<String> movieList = new ArrayList<>();
+				for(int i = 1; i < userID_movieIDList.length; i++) {
+					movieList.add(userID_movieIDList[i]);
+				}
+                userID_movieIDMap.put(userID_movieIDList[0], movieList);
 			}
             double globalAvg = globalSum / globalCount;
-            context.write(new Text("GLOBAL"), new Text(Double.toString(globalAvg)));
+			for(Map.Entry<String,ArrayList<String>> entry: userID_movieIDMap.entrySet()) {
+				String movieID = entry.getKey();
+				ArrayList<String> userList = entry.getValue();
+				for (String user : userList){
+                    context.write(new Text(user + "," + movieID), new Text(Double.toString(globalAvg)));
+				}
+			}
+            
 		}
 	}
 
