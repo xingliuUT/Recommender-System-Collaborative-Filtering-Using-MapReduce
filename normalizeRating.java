@@ -28,7 +28,7 @@ public class normalizeRating {
 			
 			String[] outputList = value.toString().trim().split("\t");
             
-			context.write(new Text(outputList[0]), new Text(outputList[1]));
+			context.write(new Text(outputList[0]), new Text("globalAVG=" + outputList[1]));
 		}
 	}
     public static class itemBiasMapper extends Mapper<LongWritable, Text, Text, Text> {
@@ -69,7 +69,9 @@ public class normalizeRating {
 			    for (int i = 0; i < userID_Score.length - 3; i++) {
 				    String item = userID_Score[i];
                     String movie = item.split(":")[0];
+					String raw = item.split(":")[1];
 				    context.write(new Text(user + "," + movie), new Text("userAVG=" + userAVG));
+					context.write(new Text(user + "," + movie), new Text("RAW=" + raw));
 			    }
 			}
 		}
@@ -79,9 +81,30 @@ public class normalizeRating {
 		@Override
 		public void reduce(Text key, Iterable<Text> values, Context context)
 				throws IOException, InterruptedException {
+			double itemAVG = 0., userAVG = 0., globalAVG = 0., raw = 0.;
 			while (values.iterator().hasNext()) {
-				context.write(key, new Text(values.iterator().next()));
+				String item = values.iterator().next().toString();
+				//context.write(key, new Text(item));
+				String[] value = item.split("=");
+				//context.write(key, new Text(value[0]));
+				if (value[0].equals("itemAVG")) {
+					itemAVG = Double.parseDouble(value[1]);
+					//context.write(key, new Text(Double.toString(itemAVG)));
+				} else if (value[0].equals("userAVG")) {
+					userAVG = Double.parseDouble(value[1]);
+					//context.write(key, new Text(Double.toString(userAVG)));
+				} else if (value[0].equals("globalAVG")) {
+					globalAVG = Double.parseDouble(value[1]);
+					//context.write(key, new Text(Double.toString(baseline)));
+				} else if (value[0].equals("RAW")) {
+					raw = Double.parseDouble(value[1]);
+					//context.write(key, new Text(Double.toString(raw)));
+				}
 			}
+			double baseline = itemAVG + userAVG - globalAVG;
+			double normalized = raw - itemAVG - userAVG + globalAVG;
+		    context.write(key, new Text("normalized=" + Double.toString(normalized)
+	        + ",baseline=" + Double.toString(baseline)));
 		}
 	}
 
