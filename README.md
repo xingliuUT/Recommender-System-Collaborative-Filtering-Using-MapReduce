@@ -1,6 +1,6 @@
 # Recommender System
 
-##Collaborative Filtering Using MapReduce
+## Collaborative Filtering Using MapReduce
 
 In this project, I user item-based collaborative filtering (CF) method to build a recommender system.
 
