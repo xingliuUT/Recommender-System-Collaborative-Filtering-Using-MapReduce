@@ -9,6 +9,7 @@ public class Driver {
 		cooccurance cooccurance = new cooccurance();
 		similarity similarity = new similarity();
 		matmul matmul = new matmul();
+		collect collect = new collect();
 		
 		String rawInput = args[0];
 		String byUserOutputDir = args[1];
@@ -18,6 +19,7 @@ public class Driver {
 		String cooccuranceOutputDir = args[5];
 		String similarityOutputDir = args[6];
 		String matmulOutputDir = args[7];
+		String collectOutputDir = args[8];
 		
 		String[] path1 = {rawInput, byUserOutputDir};
 		String[] path2 = {rawInput, byItemOutputDir};
@@ -26,6 +28,7 @@ public class Driver {
 		String[] path5 = {byUserOutputDir, cooccuranceOutputDir};
 		String[] path6 = {cooccuranceOutputDir, similarityOutputDir};
 		String[] path7 = {similarityOutputDir, normalizeOutputDir, matmulOutputDir};
+		String[] path8 = {matmulOutputDir, collectOutputDir};
 		
 		preProcessByUser.main(path1);
 		preProcessByItem.main(path2);
@@ -34,6 +37,7 @@ public class Driver {
 		cooccurance.main(path5);
 		similarity.main(path6);
 		matmul.main(path7);
+		collect.main(path8);
 	}
 
 }
